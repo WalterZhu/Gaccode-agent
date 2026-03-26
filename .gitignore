@@ -1,0 +1,24 @@
+# Token cache
+.gaccode_oauth_token.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+
+# Env
+.env
+.env.*
+TOOLS.md
+
+# Claude
+.claude/
