@@ -75,9 +75,18 @@ cmd_refill() {
   local token
   token=$(_get_token)
   local response
-  response=$(curl -sf -X POST "$BASE_URL/api/ticket" \
-    -H "Authorization: Bearer $token")
-  echo "充值成功：$response"
+  response=$(curl -sf -X POST "$BASE_URL/api/tickets" \
+    -H "Authorization: Bearer $token" \
+    -H "Content-Type: application/json" \
+    -d '{"categoryId":3,"title":"请求重置积分","description":"","language":"zh"}')
+  local support_msg
+  support_msg=$(echo "$response" | jq -r '.ticket.messages[] | select(.isFromSupport==true) | .message' | head -1)
+  if [[ "$support_msg" == *"已重置"* ]]; then
+    echo "充值成功：$support_msg"
+  else
+    echo "充值失败：$support_msg"
+    exit 1
+  fi
 }
 
 case "${1:-}" in

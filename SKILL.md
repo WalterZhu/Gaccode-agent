@@ -47,9 +47,3 @@ Token 缓存策略：
 |------|------|
 | `gaccode.sh balance` | 查询当前积分余额 |
 | `gaccode.sh refill` | 触发积分充值 |
-
-## API
-
-- 登录：`POST /api/login`，body `{"email":"...","password":"..."}`，返回 `token`
-- 余额：`GET /api/credits/balance`，header `Authorization: Bearer <token>`，返回 `balance / creditCap / refillRate / lastRefill`
-- 充值：`POST /api/ticket`，header `Authorization: Bearer <token>`，触发积分充值
