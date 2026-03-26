@@ -9,7 +9,7 @@ TOKEN_FILE="$ROOT_DIR/.gaccode_oauth_token.json"
 
 _need_login() {
   [[ ! -f "$TOKEN_FILE" ]] && return 0
-  expires_at=$(grep -oP '(?<="expires_at":")[^"]+' "$TOKEN_FILE")
+  expires_at=$(jq -r '.expires_at' "$TOKEN_FILE" 2>/dev/null || echo "")
   now=$(date -u "+%Y-%m-%dT%H:%M:%SZ")
   [[ "$now" > "$expires_at" ]] && return 0
   return 1
@@ -19,5 +19,5 @@ get_token() {
   if _need_login; then
     bash "$SCRIPT_DIR/login.sh" >&2
   fi
-  grep -oP '(?<="token":")[^"]+' "$TOKEN_FILE"
+  jq -r '.token' "$TOKEN_FILE"
 }
