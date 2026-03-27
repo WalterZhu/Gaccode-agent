@@ -108,6 +108,35 @@ cmd_balance() {
 cmd_refill() {
   local token
   token=$(_get_token)
+
+  local balance_response
+  balance_response=$(curl -sf "$BASE_URL/api/credits/balance" \
+    -H "Authorization: Bearer $token")
+
+  local should_refill
+  should_refill=$(echo "$balance_response" | jq -r '
+    if (.creditCap // 0) > 0 and ((.balance // 0) / .creditCap) < 0.05
+    then "true"
+    else "false"
+    end
+  ')
+
+  if [[ "$should_refill" != "true" ]]; then
+    local balance
+    local credit_cap
+    local ratio_percent
+    balance=$(echo "$balance_response" | jq -r '.balance // 0')
+    credit_cap=$(echo "$balance_response" | jq -r '.creditCap // 0')
+    ratio_percent=$(echo "$balance_response" | jq -r '
+      if (.creditCap // 0) > 0
+      then ((.balance // 0) / .creditCap * 100)
+      else 0
+      end
+    ')
+    printf "无需执行：当前余额 %s / %s (%.2f%%)\n" "$balance" "$credit_cap" "$ratio_percent"
+    return 0
+  fi
+
   local response
   response=$(curl -sf -X POST "$BASE_URL/api/tickets" \
     -H "Authorization: Bearer $token" \
