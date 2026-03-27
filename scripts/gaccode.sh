@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# gaccode CLI - 查询余额 / 触发重置
-# 用法: gaccode.sh <balance|refill>
+# gaccode CLI - 触发重置（包含余额检查）
+# 用法: gaccode.sh [force]
 
 set -euo pipefail
 
@@ -71,16 +71,14 @@ _get_token() {
   cat "$TOKEN_FILE"
 }
 
-# 子命令：查询余额
-cmd_balance() {
-  local token
-  token=$(_get_token)
-  local response
-  response=$(curl -sf "$BASE_URL/api/credits/balance" \
+# 获取余额并附加 balanceRatio
+_get_balance_with_ratio() {
+  local token="$1"
+  local balance_response
+  balance_response=$(curl -sf "$BASE_URL/api/credits/balance" \
     -H "Authorization: Bearer $token")
 
-  # 输出余额信息，并包含当前余额比例（balance / creditCap）
-  echo "$response" | jq '
+  echo "$balance_response" | jq '
     . + {
       balanceRatio: (
         if (.creditCap // 0) > 0
@@ -92,36 +90,32 @@ cmd_balance() {
   '
 }
 
-# 子命令：触发重置
+# 执行重置（force=true 时跳过阈值检查）
 cmd_refill() {
+  local force_mode="${1:-false}"
   local token
   token=$(_get_token)
 
-  local balance_response
-  balance_response=$(curl -sf "$BASE_URL/api/credits/balance" \
-    -H "Authorization: Bearer $token")
+  local balance_with_ratio
+  balance_with_ratio=$(_get_balance_with_ratio "$token")
 
   local should_refill
-  should_refill=$(echo "$balance_response" | jq -r '
+  should_refill=$(echo "$balance_with_ratio" | jq -r '
     if (.creditCap // 0) > 0 and ((.balance // 0) / .creditCap) < 0.05
     then "true"
     else "false"
     end
   ')
 
-  if [[ "$should_refill" != "true" ]]; then
-    local balance
-    local credit_cap
-    local ratio_percent
-    balance=$(echo "$balance_response" | jq -r '.balance // 0')
-    credit_cap=$(echo "$balance_response" | jq -r '.creditCap // 0')
-    ratio_percent=$(echo "$balance_response" | jq -r '
-      if (.creditCap // 0) > 0
-      then ((.balance // 0) / .creditCap * 100)
-      else 0
-      end
-    ')
-    printf "无需执行：当前余额 %s / %s (%.2f%%)，执行界限 < 5.00%%\n" "$balance" "$credit_cap" "$ratio_percent"
+  if [[ "$force_mode" != "true" && "$should_refill" != "true" ]]; then
+    echo "$balance_with_ratio" | jq '
+      . + {
+        action: "skip_refill",
+        reason: "balance_ratio_not_below_threshold",
+        refillThreshold: 0.05,
+        forced: false
+      }
+    '
     return 0
   fi
 
@@ -131,20 +125,49 @@ cmd_refill() {
     -H "Content-Type: application/json" \
     -d '{"categoryId":3,"title":"请求重置积分","description":"","language":"zh"}')
   local support_msg
-  support_msg=$(echo "$response" | jq -r '.ticket.messages[] | select(.isFromSupport==true) | .message' | head -1)
+  support_msg=$(echo "$response" | jq -r '.ticket.messages[]? | select(.isFromSupport==true) | .message' | head -1)
   if [[ "$support_msg" == *"已重置"* ]]; then
-    echo "重置成功：$support_msg"
+    local balance_after
+    balance_after=$(_get_balance_with_ratio "$token" || echo "null")
+    jq -n \
+      --argjson balanceBefore "$balance_with_ratio" \
+      --argjson balanceAfter "$balance_after" \
+      --arg message "$support_msg" \
+      --argjson forced "$force_mode" \
+      '{
+        action: "refill",
+        status: "success",
+        refillThreshold: 0.05,
+        forced: $forced,
+        message: $message,
+        balanceBefore: $balanceBefore,
+        balanceAfter: $balanceAfter
+      }'
   else
-    echo "重置失败：请登录gaccode网站查看"
+    jq -n \
+      --argjson balanceBefore "$balance_with_ratio" \
+      --argjson forced "$force_mode" \
+      '{
+        action: "refill",
+        status: "failed",
+        refillThreshold: 0.05,
+        forced: $forced,
+        message: "请登录gaccode网站查看",
+        balanceBefore: $balanceBefore
+      }'
     exit 1
   fi
 }
 
 case "${1:-}" in
-  balance) cmd_balance ;;
-  refill)  cmd_refill ;;
+  "")
+    cmd_refill "false"
+    ;;
+  force)
+    cmd_refill "true"
+    ;;
   *)
-    echo "用法: $(basename "$0") <balance|refill>" >&2
+    echo "用法: $(basename "$0") [force]" >&2
     exit 1
     ;;
 esac

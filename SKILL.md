@@ -17,9 +17,10 @@ Before using this skill, ensure gaccode credentials are configured correctly.
 
 Authentication, token refresh, and API details are encapsulated by the script. Prefer script subcommands instead of reimplementing the login flow at the agent layer.
 
-Command: `scripts/gaccode.sh balance`
+Command: `scripts/gaccode.sh`
+Optional force mode: `scripts/gaccode.sh force`
 
-Example output:
+Example outputs:
 
 ```json
 {
@@ -27,22 +28,51 @@ Example output:
   "creditCap": 1000,
   "refillRate": 50,
   "lastRefill": "2026-03-27T09:00:00.000Z",
-  "balanceRatio": 0.12
+  "balanceRatio": 0.12,
+  "action": "skip_refill",
+  "reason": "balance_ratio_not_below_threshold",
+  "refillThreshold": 0.05,
+  "forced": false
 }
 ```
 
-Command: `scripts/gaccode.sh refill`
-
-Example outputs:
-
-```text
-无需执行：当前余额 120 / 1000 (12.00%)，执行界限 < 5.00%
+```json
+{
+  "action": "refill",
+  "status": "success",
+  "refillThreshold": 0.05,
+  "forced": false,
+  "message": "您的积分已重置。",
+  "balanceBefore": {
+    "balance": 20,
+    "creditCap": 1000,
+    "refillRate": 50,
+    "lastRefill": "2026-03-26T09:00:00.000Z",
+    "balanceRatio": 0.02
+  },
+  "balanceAfter": {
+    "balance": 1000,
+    "creditCap": 1000,
+    "refillRate": 50,
+    "lastRefill": "2026-03-27T09:00:00.000Z",
+    "balanceRatio": 1
+  }
+}
 ```
 
-```text
-重置成功：您的积分已重置。
-```
-
-```text
-重置失败：请登录gaccode网站查看
+```json
+{
+  "action": "refill",
+  "status": "failed",
+  "refillThreshold": 0.05,
+  "forced": true,
+  "message": "请登录gaccode网站查看",
+  "balanceBefore": {
+    "balance": 20,
+    "creditCap": 1000,
+    "refillRate": 50,
+    "lastRefill": "2026-03-26T09:00:00.000Z",
+    "balanceRatio": 0.02
+  }
+}
 ```
