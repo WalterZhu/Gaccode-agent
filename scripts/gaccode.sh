@@ -21,6 +21,16 @@ BASE_URL="${GACCODE_BASE_URL:-https://gaccode.com}"
 EMAIL="${GACCODE_EMAIL:-}"
 PASSWORD="${GACCODE_PASSWORD:-}"
 
+# 从系统读取时区，回退到 Asia/Shanghai
+if [[ -f /etc/timezone ]]; then
+  TZ=$(cat /etc/timezone)
+elif [[ -L /etc/localtime ]]; then
+  TZ=$(readlink /etc/localtime | sed 's|.*/zoneinfo/||')
+else
+  TZ="Asia/Shanghai"
+fi
+export TZ
+
 # 检查 token 是否有效
 _token_valid() {
   [[ -f "$TOKEN_FILE" ]]
@@ -65,8 +75,33 @@ _get_token() {
 cmd_balance() {
   local token
   token=$(_get_token)
-  curl -sf "$BASE_URL/api/credits/balance" \
-    -H "Authorization: Bearer $token"
+  local response
+  response=$(curl -sf "$BASE_URL/api/credits/balance" \
+    -H "Authorization: Bearer $token")
+  
+  # 转换 lastRefill 时间戳到本地时区
+  local last_refill_utc
+  last_refill_utc=$(echo "$response" | jq -r '.lastRefill')
+  
+  local last_refill_local
+  if [[ -n "$last_refill_utc" && "$last_refill_utc" != "null" ]]; then
+    last_refill_local=$(TZ="$TZ" date -d "$last_refill_utc" '+%Y-%m-%d %H:%M:%S %Z' 2>/dev/null || echo "$last_refill_utc")
+  else
+    last_refill_local="N/A"
+  fi
+  
+  # 输出格式化结果
+  echo "$response" | jq \
+    --arg tz "$TZ" \
+    --arg last_refill_local "$last_refill_local" \
+    '{
+      balance: .balance,
+      creditCap: .creditCap,
+      refillRate: .refillRate,
+      lastRefill_UTC: .lastRefill,
+      lastRefill_Local: $last_refill_local,
+      timezone: $tz
+    }'
 }
 
 # 子命令：触发重置
