@@ -1,5 +1,5 @@
 # Token cache
-.gaccode_oauth_token.json
+.gaccode_oauth_token
 
 # OS
 .DS_Store

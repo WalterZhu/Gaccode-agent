@@ -1,26 +1,25 @@
 #!/usr/bin/env bash
-# gaccode CLI - 查询余额 / 触发充值
+# gaccode CLI - 查询余额 / 触发重置
 # 用法: gaccode.sh <balance|refill>
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
-TOKEN_FILE="$ROOT_DIR/.gaccode_oauth_token.json"
-TOOLS_FILE="$ROOT_DIR/TOOLS.md"
+TOKEN_FILE="$ROOT_DIR/.gaccode_oauth_token"
+ENV_FILE="$ROOT_DIR/.env"
 
-# 读取配置
-_config() {
-  local key="$1"
-  local default="${2:-}"
-  local val
-  val=$(awk -F': ' "/^${key}:/{print \$2}" "$TOOLS_FILE" | tr -d '[:space:]')
-  echo "${val:-$default}"
-}
+# 读取 .env 配置（环境变量优先，.env 作为回退）
+if [[ -f "$ENV_FILE" ]]; then
+  while IFS='=' read -r key value; do
+    [[ "$key" =~ ^#|^$ ]] && continue
+    [[ -z "${!key+x}" ]] && export "$key=$value"
+  done < "$ENV_FILE"
+fi
 
-BASE_URL=$(_config gaccode_base_url "https://gaccode.com")
-EMAIL=$(_config gaccode_email)
-PASSWORD=$(_config gaccode_password)
+BASE_URL="${GACCODE_BASE_URL:-https://gaccode.com}"
+EMAIL="${GACCODE_EMAIL:-}"
+PASSWORD="${GACCODE_PASSWORD:-}"
 
 # 检查 token 是否有效
 _token_valid() {
@@ -70,7 +69,7 @@ cmd_balance() {
     -H "Authorization: Bearer $token"
 }
 
-# 子命令：触发充值
+# 子命令：触发重置
 cmd_refill() {
   local token
   token=$(_get_token)
@@ -82,9 +81,9 @@ cmd_refill() {
   local support_msg
   support_msg=$(echo "$response" | jq -r '.ticket.messages[] | select(.isFromSupport==true) | .message' | head -1)
   if [[ "$support_msg" == *"已重置"* ]]; then
-    echo "充值成功：$support_msg"
+    echo "重置成功：$support_msg"
   else
-    echo "充值失败：$support_msg"
+    echo "重置失败：$support_msg"
     exit 1
   fi
 }

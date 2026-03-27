@@ -23,13 +23,13 @@ metadata:
 | `gaccode_password` | gaccode.com 登录密码 |
 | `gaccode_base_url` | API 基础地址，默认 `https://gaccode.com` |
 
-> `.gaccode_oauth_token.json` 由 skill 自动管理，无需配置。文件内容为纯文本 token 字符串。
+> `.gaccode_oauth_token` 由 skill 自动管理，无需配置。文件内容为纯文本 token 字符串。
 
 ## Authentication
 
 Token 缓存策略：
-1. 先检查 `.gaccode_oauth_token.json` 是否存在，并请求 `/api/me` 验证有效性
-2. 验证失败则重新登录，将新 token 写入 `.gaccode_oauth_token.json`
+1. 先检查 `.gaccode_oauth_token` 是否存在，并请求 `/api/me` 验证有效性
+2. 验证失败则重新登录，将新 token 写入 `.gaccode_oauth_token`
 
 ## Quick Start
 
