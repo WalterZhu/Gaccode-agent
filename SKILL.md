@@ -17,7 +17,32 @@ Before using this skill, ensure gaccode credentials are configured correctly.
 
 Authentication, token refresh, and API details are encapsulated by the script. Prefer script subcommands instead of reimplementing the login flow at the agent layer.
 
-## Available scripts
+Command: `scripts/gaccode.sh balance`
 
-- `scripts/gaccode.sh balance` — Return the current credit balance, cap, refill rate, and most recent refill time.
-- `scripts/gaccode.sh refill` — Trigger the scripted gaccode refill flow.
+Example output:
+
+```json
+{
+  "balance": 120,
+  "creditCap": 1000,
+  "refillRate": 50,
+  "lastRefill": "2026-03-27T09:00:00.000Z",
+  "balanceRatio": 0.12
+}
+```
+
+Command: `scripts/gaccode.sh refill`
+
+Example outputs:
+
+```text
+无需执行：当前余额 120 / 1000 (12.00%)，执行界限 < 5.00%
+```
+
+```text
+重置成功：您的积分已重置。
+```
+
+```text
+重置失败：请登录gaccode网站查看
+```

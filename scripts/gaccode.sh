@@ -78,30 +78,18 @@ cmd_balance() {
   local response
   response=$(curl -sf "$BASE_URL/api/credits/balance" \
     -H "Authorization: Bearer $token")
-  
-  # 转换 lastRefill 时间戳到本地时区
-  local last_refill_utc
-  last_refill_utc=$(echo "$response" | jq -r '.lastRefill')
-  
-  local last_refill_local
-  if [[ -n "$last_refill_utc" && "$last_refill_utc" != "null" ]]; then
-    last_refill_local=$(TZ="$TZ" date -d "$last_refill_utc" '+%Y-%m-%d %H:%M:%S %Z' 2>/dev/null || echo "$last_refill_utc")
-  else
-    last_refill_local="N/A"
-  fi
-  
-  # 输出格式化结果
-  echo "$response" | jq \
-    --arg tz "$TZ" \
-    --arg last_refill_local "$last_refill_local" \
-    '{
-      balance: .balance,
-      creditCap: .creditCap,
-      refillRate: .refillRate,
-      lastRefill_UTC: .lastRefill,
-      lastRefill_Local: $last_refill_local,
-      timezone: $tz
-    }'
+
+  # 输出余额信息，并包含当前余额比例（balance / creditCap）
+  echo "$response" | jq '
+    . + {
+      balanceRatio: (
+        if (.creditCap // 0) > 0
+        then ((.balance // 0) / .creditCap)
+        else 0
+        end
+      )
+    }
+  '
 }
 
 # 子命令：触发重置
@@ -133,7 +121,7 @@ cmd_refill() {
       else 0
       end
     ')
-    printf "无需执行：当前余额 %s / %s (%.2f%%)\n" "$balance" "$credit_cap" "$ratio_percent"
+    printf "无需执行：当前余额 %s / %s (%.2f%%)，执行界限 < 5.00%%\n" "$balance" "$credit_cap" "$ratio_percent"
     return 0
   fi
 
@@ -147,7 +135,7 @@ cmd_refill() {
   if [[ "$support_msg" == *"已重置"* ]]; then
     echo "重置成功：$support_msg"
   else
-    echo "重置失败：$support_msg"
+    echo "重置失败：请登录gaccode网站查看"
     exit 1
   fi
 }
