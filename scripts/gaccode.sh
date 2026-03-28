@@ -9,17 +9,45 @@ ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 TOKEN_FILE="$ROOT_DIR/.gaccode_oauth_token"
 ENV_FILE="$ROOT_DIR/.env"
 
-# 读取 .env 配置（环境变量优先，.env 作为回退）
-if [[ -f "$ENV_FILE" ]]; then
-  while IFS='=' read -r key value; do
-    [[ "$key" =~ ^#|^$ ]] && continue
-    [[ -z "${!key+x}" ]] && export "$key=$value"
-  done < "$ENV_FILE"
-fi
+BASE_URL="https://gaccode.com"
+EMAIL=""
+PASSWORD=""
 
-BASE_URL="${GACCODE_BASE_URL:-https://gaccode.com}"
-EMAIL="${GACCODE_EMAIL:-}"
-PASSWORD="${GACCODE_PASSWORD:-}"
+# 仅从 .env 读取配置，不读取当前 shell 环境变量
+_load_env_config() {
+  if [[ ! -f "$ENV_FILE" ]]; then
+    echo "缺少配置文件: $ENV_FILE" >&2
+    exit 1
+  fi
+
+  while IFS='=' read -r raw_key raw_value; do
+    [[ "$raw_key" =~ ^[[:space:]]*# ]] && continue
+    [[ -z "${raw_key//[[:space:]]/}" ]] && continue
+
+    local key value
+    key=$(echo "$raw_key" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+    value=$(echo "${raw_value:-}" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+
+    if [[ "$value" =~ ^\"(.*)\"$ ]]; then
+      value="${BASH_REMATCH[1]}"
+    elif [[ "$value" =~ ^\'(.*)\'$ ]]; then
+      value="${BASH_REMATCH[1]}"
+    fi
+
+    case "$key" in
+      GACCODE_BASE_URL) BASE_URL="${value:-https://gaccode.com}" ;;
+      GACCODE_EMAIL) EMAIL="$value" ;;
+      GACCODE_PASSWORD) PASSWORD="$value" ;;
+    esac
+  done < "$ENV_FILE"
+
+  if [[ -z "$EMAIL" || -z "$PASSWORD" ]]; then
+    echo ".env 中缺少必要配置: GACCODE_EMAIL 或 GACCODE_PASSWORD" >&2
+    exit 1
+  fi
+}
+
+_load_env_config
 
 # 从系统读取时区，回退到 Asia/Shanghai
 if [[ -f /etc/timezone ]]; then

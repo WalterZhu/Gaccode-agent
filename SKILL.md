@@ -20,6 +20,8 @@ Authentication, token refresh, and API details are encapsulated by the script. P
 Command: `scripts/gaccode.sh`
 Optional force mode: `scripts/gaccode.sh force`
 
+See `references/configuration.md` for setup and configuration examples.
+
 Example outputs:
 
 ```json

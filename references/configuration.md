@@ -1,0 +1,41 @@
+# Configuration
+
+The `gaccode` skill reads configuration only from `.env` in the skill root.
+Shell environment variables are ignored by script logic.
+
+## Authentication Strategy
+
+At the moment, gaccode does not provide an API key flow for this use case.
+So this skill uses credential-based login to obtain and refresh a token for API calls.
+
+When gaccode officially supports API keys for the same workflow, this skill will be updated to prefer API-key authentication.
+
+## Required Variables
+
+- `GACCODE_EMAIL`: Your gaccode account email.
+- `GACCODE_PASSWORD`: Your gaccode account password.
+
+## Optional Variables
+
+- `GACCODE_BASE_URL`: gaccode base URL.
+  - Default: `https://gaccode.com`
+
+## .env Example
+
+Create `.env` in the skill root (`/Users/hqzhu/dev/agent/skills/gaccode/.env`):
+
+```dotenv
+GACCODE_BASE_URL=https://gaccode.com
+GACCODE_EMAIL=your_email@example.com
+GACCODE_PASSWORD=your_password
+```
+
+## Quick Check
+
+Run:
+
+```bash
+scripts/gaccode.sh
+```
+
+If auth fails, verify email/password and confirm `.env` formatting is `KEY=value` with no extra quotes.
