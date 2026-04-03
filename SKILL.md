@@ -1,6 +1,6 @@
 ---
 name: gaccode
-description: "Check gaccode.com credit balance and trigger the refill flow when needed. Use when you need to inspect remaining gaccode credits, verify the credit cap or recent refill timing, or manually request more credits."
+description: "Use gaccode scripts to inspect balance, trigger refill when needed, choose a relay node, and smoke-test Claude Code or OpenAI Codex provider configs."
 metadata:
   {
     "openclaw":
@@ -13,16 +13,48 @@ metadata:
 
 # Gaccode
 
+Use this skill when you need to:
+
+- Check gaccode credit balance
+- Trigger the refill flow
+- Select the best relay node
+- Smoke-test a Claude Code or OpenAI Codex provider config
+
 Before using this skill, ensure gaccode credentials are configured correctly.
 
-Authentication, token refresh, and API details are encapsulated by the script. Prefer script subcommands instead of reimplementing the login flow at the agent layer.
+## Main Scripts
 
-Command: `scripts/gaccode.sh`
-Optional force mode: `scripts/gaccode.sh force`
+Balance check and refill:
 
-See `references/configuration.md` for setup and configuration examples.
+- `scripts/gaccode.sh`
+- `scripts/gaccode.sh force`
 
-Example outputs:
+Relay node selection:
+
+- `scripts/select_node.sh`
+- `scripts/select_node.sh --json`
+
+Provider smoke test:
+
+- `scripts/test_provider.sh`
+
+## Provider Smoke Test
+
+Use `scripts/test_provider.sh` to send a minimal text-only `hello` request. By default, it reads the provider from `~/.openclaw/openclaw.json`.
+
+Claude Code:
+
+```bash
+scripts/test_provider.sh --provider custom-claude-code
+```
+
+OpenAI Codex:
+
+```bash
+scripts/test_provider.sh --provider custom-openai-codex
+```
+
+## Example Output
 
 ```json
 {
@@ -38,43 +70,7 @@ Example outputs:
 }
 ```
 
-```json
-{
-  "action": "refill",
-  "status": "success",
-  "refillThreshold": 0.05,
-  "forced": false,
-  "message": "您的积分已重置。",
-  "balanceBefore": {
-    "balance": 20,
-    "creditCap": 1000,
-    "refillRate": 50,
-    "lastRefill": "2026-03-26T09:00:00.000Z",
-    "balanceRatio": 0.02
-  },
-  "balanceAfter": {
-    "balance": 1000,
-    "creditCap": 1000,
-    "refillRate": 50,
-    "lastRefill": "2026-03-27T09:00:00.000Z",
-    "balanceRatio": 1
-  }
-}
-```
+## References
 
-```json
-{
-  "action": "refill",
-  "status": "failed",
-  "refillThreshold": 0.05,
-  "forced": true,
-  "message": "请登录gaccode网站查看",
-  "balanceBefore": {
-    "balance": 20,
-    "creditCap": 1000,
-    "refillRate": 50,
-    "lastRefill": "2026-03-26T09:00:00.000Z",
-    "balanceRatio": 0.02
-  }
-}
-```
+- [references/configuration.md](references/configuration.md)
+- [references/openclaw_custom_providers.md](references/openclaw_custom_providers.md)
