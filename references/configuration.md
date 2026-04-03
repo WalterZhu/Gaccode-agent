@@ -19,6 +19,10 @@ When gaccode officially supports API keys for the same workflow, this skill will
 
 - `GACCODE_BASE_URL`: gaccode base URL.
   - Default: `https://gaccode.com`
+  - **Node Selection**: Gaccode operates multiple relay nodes. Choose the optimal node based on latency:
+    - Available nodes: `gaccode.com`, `api.gaccode.com`, `relay01.gaccode.com`, `relay03.gaccode.com`, `relay05.gaccode.com`, `relay07.gaccode.com`, `relay08.gaccode.com`
+    - Run `scripts/select_node.sh` to automatically select the best node
+    - Example: `GACCODE_BASE_URL=https://relay05.gaccode.com`
 
 ## .env Example
 
