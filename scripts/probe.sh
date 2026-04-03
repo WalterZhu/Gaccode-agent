@@ -4,35 +4,6 @@ set -euo pipefail
 
 DEFAULT_CONFIG_PATH="${OPENCLAW_CONFIG:-$HOME/.openclaw/openclaw.json}"
 
-usage() {
-  cat <<'EOF' >&2
-Usage:
-  scripts/test_provider.sh --provider PROVIDER_NAME [--config PATH]
-
-Overrides:
-  scripts/test_provider.sh \
-    --base-url URL \
-    --api-key KEY \
-    --api anthropic-messages|openai-responses \
-    --model MODEL_ID
-
-Examples:
-  scripts/test_provider.sh --provider custom-claude-code
-  scripts/test_provider.sh --provider custom-openai-codex
-
-  scripts/test_provider.sh \
-    --config ~/.openclaw/openclaw.json \
-    --provider custom-openai-codex
-
-  scripts/test_provider.sh \
-    --base-url https://relay03.gaccode.com/codex/v1 \
-    --api-key YOUR_API_KEY \
-    --api openai-responses \
-    --model gpt-5.4
-EOF
-  exit 1
-}
-
 require_bin() {
   if ! command -v "$1" >/dev/null 2>&1; then
     echo "Missing required binary: $1" >&2
@@ -40,7 +11,15 @@ require_bin() {
   fi
 }
 
-CONFIG_PATH="$DEFAULT_CONFIG_PATH"
+require_arg_value() {
+  local option="$1"
+  local value="${2:-}"
+  [[ -n "$value" ]] || {
+    echo "Missing value for argument: $option" >&2
+    exit 1
+  }
+}
+
 PROVIDER_NAME=""
 BASE_URL=""
 API_KEY=""
@@ -49,42 +28,25 @@ MODEL_ID=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --config)
-      CONFIG_PATH="${2:-}"
-      shift 2
-      ;;
     --provider)
+      require_arg_value "$1" "${2:-}"
       PROVIDER_NAME="${2:-}"
       shift 2
       ;;
-    --base-url)
-      BASE_URL="${2:-}"
-      shift 2
-      ;;
-    --api-key)
-      API_KEY="${2:-}"
-      shift 2
-      ;;
-    --api)
-      API_KIND="${2:-}"
-      shift 2
-      ;;
-    --model)
-      MODEL_ID="${2:-}"
-      shift 2
-      ;;
-    -h|--help)
-      usage
-      ;;
     *)
       echo "Unknown argument: $1" >&2
-      usage
+      exit 1
       ;;
   esac
 done
 
 require_bin curl
 require_bin jq
+
+[[ -n "$PROVIDER_NAME" ]] || {
+  echo "Missing required argument: --provider" >&2
+  exit 1
+}
 
 resolve_api_key_from_provider() {
   local provider_json="$1"
@@ -152,29 +114,43 @@ resolve_api_key_from_provider() {
 }
 
 load_from_config() {
-  [[ -n "$PROVIDER_NAME" ]] || return 0
-  [[ -f "$CONFIG_PATH" ]] || {
-    echo "OpenClaw config not found: $CONFIG_PATH" >&2
+  [[ -f "$DEFAULT_CONFIG_PATH" ]] || {
+    echo "OpenClaw config not found: $DEFAULT_CONFIG_PATH" >&2
     exit 1
   }
 
   local provider_json
   provider_json=$(jq -ce --arg provider "$PROVIDER_NAME" '
     .models.providers[$provider] // .providers[$provider]
-  ' "$CONFIG_PATH") || {
+  ' "$DEFAULT_CONFIG_PATH") || {
     echo "Provider not found in config: $PROVIDER_NAME" >&2
     exit 1
   }
 
-  [[ -n "$BASE_URL" ]] || BASE_URL=$(echo "$provider_json" | jq -r '.baseUrl // empty')
-  [[ -n "$API_KIND" ]] || API_KIND=$(echo "$provider_json" | jq -r '.api // empty')
-  [[ -n "$MODEL_ID" ]] || MODEL_ID=$(echo "$provider_json" | jq -r '.models[0].id // empty')
-  [[ -n "$API_KEY" ]] || API_KEY=$(resolve_api_key_from_provider "$provider_json")
+  BASE_URL=$(echo "$provider_json" | jq -r '.baseUrl // empty')
+  API_KIND=$(echo "$provider_json" | jq -r '.api // empty')
+  MODEL_ID=$(echo "$provider_json" | jq -r '.models[0].id // empty')
+  API_KEY=$(resolve_api_key_from_provider "$provider_json")
 }
 
 load_from_config
 
-[[ -n "$BASE_URL" && -n "$API_KEY" && -n "$API_KIND" && -n "$MODEL_ID" ]] || usage
+[[ -n "$BASE_URL" ]] || {
+  echo "Missing required value: base URL" >&2
+  exit 1
+}
+[[ -n "$API_KEY" ]] || {
+  echo "Missing required value: API key" >&2
+  exit 1
+}
+[[ -n "$API_KIND" ]] || {
+  echo "Missing required value: API kind" >&2
+  exit 1
+}
+[[ -n "$MODEL_ID" ]] || {
+  echo "Missing required value: model ID" >&2
+  exit 1
+}
 BASE_URL="${BASE_URL%/}"
 
 case "$API_KIND" in

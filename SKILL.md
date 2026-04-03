@@ -6,7 +6,31 @@ metadata:
     "openclaw":
       {
         "emoji": "💳",
-        "requires": { "bins": ["curl", "jq", "bc"] },
+        "requires": { "bins": ["curl", "jq", "bc", "fping"] },
+        "install":
+          [
+            {
+              "id": "fping-brew",
+              "kind": "brew",
+              "formula": "fping",
+              "bins": ["fping"],
+              "label": "Install fping (brew)",
+            },
+            {
+              "id": "jq-brew",
+              "kind": "brew",
+              "formula": "jq",
+              "bins": ["jq"],
+              "label": "Install jq (brew)",
+            },
+            {
+              "id": "bc-brew",
+              "kind": "brew",
+              "formula": "bc",
+              "bins": ["bc"],
+              "label": "Install bc (brew)",
+            },
+          ],
       },
   }
 ---
@@ -22,52 +46,45 @@ Use this skill when you need to:
 
 Before using this skill, ensure gaccode credentials are configured correctly.
 
-## Main Scripts
+## Commands
 
-Balance check and refill:
+- `/gaccode refill` -> `scripts/refill.sh`
+- `/gaccode refill --force` -> `scripts/refill.sh --force`
+- `/gaccode relay` -> `scripts/relay.sh`
+- `/gaccode probe --provider custom-claude-code` -> `scripts/probe.sh --provider custom-claude-code`
+- `/gaccode probe --provider custom-openai-codex` -> `scripts/probe.sh --provider custom-openai-codex`
 
-- `scripts/gaccode.sh`
-- `scripts/gaccode.sh force`
+## Refill
 
-Relay node selection:
+Use `scripts/refill.sh` to check balance and trigger the refill flow when needed.
 
-- `scripts/select_node.sh`
-- `scripts/select_node.sh --json`
+```bash
+scripts/refill.sh
+scripts/refill.sh --force
+```
 
-Provider smoke test:
+## Relay
 
-- `scripts/test_provider.sh`
+Use `scripts/relay.sh` to choose the lowest-latency relay node with `fping`.
 
-## Provider Smoke Test
+```bash
+scripts/relay.sh
+```
 
-Use `scripts/test_provider.sh` to send a minimal text-only `hello` request. By default, it reads the provider from `~/.openclaw/openclaw.json`.
+## Probe
+
+Use `scripts/probe.sh` to send a minimal text-only `hello` request. By default, it reads the provider from `~/.openclaw/openclaw.json`.
 
 Claude Code:
 
 ```bash
-scripts/test_provider.sh --provider custom-claude-code
+scripts/probe.sh --provider custom-claude-code
 ```
 
 OpenAI Codex:
 
 ```bash
-scripts/test_provider.sh --provider custom-openai-codex
-```
-
-## Example Output
-
-```json
-{
-  "balance": 120,
-  "creditCap": 1000,
-  "refillRate": 50,
-  "lastRefill": "2026-03-27T09:00:00.000Z",
-  "balanceRatio": 0.12,
-  "action": "skip_refill",
-  "reason": "balance_ratio_not_below_threshold",
-  "refillThreshold": 0.05,
-  "forced": false
-}
+scripts/probe.sh --provider custom-openai-codex
 ```
 
 ## References

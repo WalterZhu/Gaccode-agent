@@ -94,8 +94,8 @@ Gaccode exposes multiple relay nodes:
 You can benchmark and choose the lowest-latency node:
 
 ```bash
-bash scripts/select_node.sh
-bash scripts/select_node.sh --json
+bash scripts/relay.sh
+bash scripts/relay.sh
 ```
 
 Then replace the hostname in `baseUrl`, for example:
@@ -156,21 +156,21 @@ If your relay operator documents a different limit for the same ID, follow the r
 
 ## Smoke Test
 
-Use `scripts/test_provider.sh` to send the simplest possible text-only request. By default, it reads the provider from `~/.openclaw/openclaw.json`.
+Use `scripts/probe.sh` to send the simplest possible text-only request. By default, it reads the provider from `~/.openclaw/openclaw.json`.
 
 Claude Code:
 
 ```bash
-scripts/test_provider.sh --provider custom-claude-code
+scripts/probe.sh --provider custom-claude-code
 ```
 
 OpenAI Codex:
 
 ```bash
-scripts/test_provider.sh --provider custom-openai-codex
+scripts/probe.sh --provider custom-openai-codex
 ```
 
-If needed, you can still override `baseUrl`, `apiKey`, `api`, and `model` manually.
+The probe script reads `baseUrl`, `apiKey`, `api`, and `model` from the selected provider config.
 
 On success, the script prints JSON with `ok: true` and the returned text. On failure, it prints `ok: false` with the upstream error.
 

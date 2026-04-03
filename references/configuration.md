@@ -19,10 +19,11 @@ When gaccode officially supports API keys for the same workflow, this skill will
 
 - `GACCODE_BASE_URL`: gaccode base URL.
   - Default: `https://gaccode.com`
-  - **Node Selection**: Gaccode operates multiple relay nodes. Choose the optimal node based on latency:
-    - Available nodes: `gaccode.com`, `api.gaccode.com`, `relay01.gaccode.com`, `relay03.gaccode.com`, `relay05.gaccode.com`, `relay07.gaccode.com`, `relay08.gaccode.com`
-    - Run `scripts/select_node.sh` to automatically select the best node
-    - Example: `GACCODE_BASE_URL=https://relay05.gaccode.com`
+  - `scripts/refill.sh` will read this value from `.env`
+  - If unset or empty, `scripts/refill.sh` falls back to `https://gaccode.com`
+- `GACCODE_TOKEN`: cached auth token.
+  - `scripts/refill.sh` will validate and reuse it when possible
+  - On login refresh, `scripts/refill.sh` will write the latest token back into `.env`
 
 ## .env Example
 
@@ -32,6 +33,7 @@ Create `.env` in the skill root (`/Users/hqzhu/dev/agent/skills/gaccode/.env`):
 GACCODE_BASE_URL=https://gaccode.com
 GACCODE_EMAIL=your_email@example.com
 GACCODE_PASSWORD=your_password
+GACCODE_TOKEN=
 ```
 
 ## Quick Check
@@ -39,7 +41,7 @@ GACCODE_PASSWORD=your_password
 Run:
 
 ```bash
-scripts/gaccode.sh
+scripts/refill.sh
 ```
 
 If auth fails, verify email/password and confirm `.env` formatting is `KEY=value` with no extra quotes.
