@@ -41,6 +41,7 @@ GACCODE_TOKEN=
 Run:
 
 ```bash
+scripts/balance.sh
 scripts/refill.sh
 ```
 

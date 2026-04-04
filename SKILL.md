@@ -46,6 +46,11 @@ Use this skill when you need to:
 
 Before using this skill, ensure gaccode credentials are configured correctly.
 
+## Execution
+
+Before running any bundled shell script, change to the skill root directory that contains this `SKILL.md`.
+Run scripts from that directory with `./scripts/...` paths instead of bare `scripts/...` paths.
+
 ## Response Format
 
 When handling `/gaccode` commands:
@@ -57,34 +62,42 @@ When handling `/gaccode` commands:
 
 ## Commands
 
-- `/gaccode` -> `scripts/refill.sh`
-- `/gaccode refill` -> `scripts/refill.sh --force`
-- `/gaccode node` -> `scripts/nodes.sh`
-- `/gaccode smoke <provider-key>` -> `scripts/smoke.sh --provider <provider-key>`
+- `/gaccode` -> `./scripts/balance.sh`
+- `/gaccode refill` -> `./scripts/refill.sh --force`
+- `/gaccode node` -> `./scripts/nodes.sh`
+- `/gaccode smoke <provider-key>` -> `./scripts/smoke.sh --provider <provider-key>`
 
 ## Refill
 
-Use `scripts/refill.sh` to check balance and trigger the refill flow when needed.
+Use `./scripts/refill.sh` to check balance and trigger the refill flow when needed.
 
 ```bash
-scripts/refill.sh
-scripts/refill.sh --force
+./scripts/refill.sh
+./scripts/refill.sh --force
+```
+
+## Balance
+
+Use `./scripts/balance.sh` to query the current credit balance without triggering refill.
+
+```bash
+./scripts/balance.sh
 ```
 
 ## Node
 
-Use `scripts/nodes.sh` to benchmark gaccode relay nodes with `fping`.
+Use `./scripts/nodes.sh` to benchmark gaccode relay nodes with `fping`.
 
 ```bash
-scripts/nodes.sh
+./scripts/nodes.sh
 ```
 
 ## Smoke
 
-Use `scripts/smoke.sh` to send a minimal text-only `hello` request. `--provider` is the provider key in `~/.openclaw/openclaw.json`. The script reads that provider config and automatically chooses the correct validation flow from its `api` value.
+Use `./scripts/smoke.sh` to send a minimal text-only `hello` request. `--provider` is the provider key in `~/.openclaw/openclaw.json`. The script reads that provider config and automatically chooses the correct validation flow from its `api` value.
 
 ```bash
-scripts/smoke.sh --provider claude-code
+./scripts/smoke.sh --provider claude-code
 ```
 
 ## References
