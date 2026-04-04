@@ -33,7 +33,7 @@ Use this provider when the client expects Anthropic-style Messages API semantics
 ```json
 {
   "providers": {
-    "custom-claude-code": {
+    "claude-code": {
       "baseUrl": "https://relay03.gaccode.com/claudecode",
       "apiKey": "YOUR_API_KEY",
       "api": "anthropic-messages",
@@ -60,7 +60,7 @@ Use this provider when the client expects OpenAI Responses API semantics.
 ```json
 {
   "providers": {
-    "custom-openai-codex": {
+    "openai-codex": {
       "baseUrl": "https://relay03.gaccode.com/codex/v1",
       "apiKey": "YOUR_API_KEY",
       "api": "openai-responses",
@@ -94,8 +94,7 @@ Gaccode exposes multiple relay nodes:
 You do not need a separate relay script. `scripts/probe.sh` automatically benchmarks these nodes with `fping` when the configured `baseUrl` already points at a gaccode relay hostname, then probes the lowest-latency node while keeping the original path.
 
 ```bash
-scripts/probe.sh --provider custom-claude-code
-scripts/probe.sh --provider custom-openai-codex
+scripts/probe.sh --provider claude-code
 ```
 
 If you want to pin a relay manually, replace the hostname in `baseUrl`, for example:
@@ -156,21 +155,13 @@ If your relay operator documents a different limit for the same ID, follow the r
 
 ## Smoke Test
 
-Use `scripts/probe.sh` to send the simplest possible text-only request. By default, it reads the provider from `~/.openclaw/openclaw.json`.
-
-Claude Code:
+Use `scripts/probe.sh` to send the simplest possible text-only request. `--provider` is the provider key in `~/.openclaw/openclaw.json`.
 
 ```bash
-scripts/probe.sh --provider custom-claude-code
+scripts/probe.sh --provider claude-code
 ```
 
-OpenAI Codex:
-
-```bash
-scripts/probe.sh --provider custom-openai-codex
-```
-
-The probe script reads `baseUrl`, `apiKey`, `api`, and `model` from the selected provider config.
+The probe script reads `baseUrl`, `apiKey`, `api`, and `model` from the selected provider config, then automatically chooses the correct validation flow from the provider's `api` value.
 When relay auto-selection runs, the JSON response also includes the resolved `baseUrl` and selected relay metadata.
 
 On success, the script prints JSON with `ok: true` and the returned text. On failure, it prints `ok: false` with the upstream error.

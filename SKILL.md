@@ -49,8 +49,7 @@ Before using this skill, ensure gaccode credentials are configured correctly.
 
 - `/gaccode refill` -> `scripts/refill.sh`
 - `/gaccode refill --force` -> `scripts/refill.sh --force`
-- `/gaccode probe --provider custom-claude-code` -> `scripts/probe.sh --provider custom-claude-code`
-- `/gaccode probe --provider custom-openai-codex` -> `scripts/probe.sh --provider custom-openai-codex`
+- `/gaccode probe --provider <provider-key>` -> `scripts/probe.sh --provider <provider-key>`
 
 ## Refill
 
@@ -63,18 +62,10 @@ scripts/refill.sh --force
 
 ## Probe
 
-Use `scripts/probe.sh` to send a minimal text-only `hello` request. By default, it reads the provider from `~/.openclaw/openclaw.json`. If the configured `baseUrl` uses a gaccode relay hostname, the script benchmarks the known relay nodes with `fping` and probes the lowest-latency node while preserving the original path.
-
-Claude Code:
+Use `scripts/probe.sh` to send a minimal text-only `hello` request. `--provider` is the provider key in `~/.openclaw/openclaw.json`. The script reads that provider config and automatically chooses the correct validation flow from its `api` value. If the configured `baseUrl` uses a gaccode relay hostname, the script benchmarks the known relay nodes with `fping` and probes the lowest-latency node while preserving the original path.
 
 ```bash
-scripts/probe.sh --provider custom-claude-code
-```
-
-OpenAI Codex:
-
-```bash
-scripts/probe.sh --provider custom-openai-codex
+scripts/probe.sh --provider claude-code
 ```
 
 ## References
