@@ -185,7 +185,7 @@ select_best_gaccode_relay() {
 
 maybe_switch_to_best_gaccode_relay() {
   local base_host=""
-  base_host=$(echo "$BASE_URL" | awk -F/ '{print $3}')
+  base_host=$(printf '%s' "$BASE_URL" | jq -Rr 'try capture("^(?<scheme>https?)://(?<host>[^/]+)").host catch ""')
 
   [[ -n "$base_host" ]] || return 0
   is_gaccode_relay_host "$base_host" || return 0
@@ -195,7 +195,13 @@ maybe_switch_to_best_gaccode_relay() {
   select_best_gaccode_relay
 
   [[ -n "$SELECTED_RELAY_NODE" ]] || return 0
-  BASE_URL="${BASE_URL/$base_host/$SELECTED_RELAY_NODE}"
+  BASE_URL=$(printf '%s' "$BASE_URL" | jq -Rr --arg host "$base_host" --arg newHost "$SELECTED_RELAY_NODE" '
+    if startswith("http://") or startswith("https://") then
+      sub("^(https?://)" + ($host | gsub("([.^$|()\\[\\]{}*+?\\\\-])"; "\\\\\\1")); "\\1" + $newHost)
+    else
+      .
+    end
+  ')
 }
 
 load_from_config() {
