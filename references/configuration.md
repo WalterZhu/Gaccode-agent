@@ -27,7 +27,7 @@ When gaccode officially supports API keys for the same workflow, this skill will
 
 ## .env Example
 
-Create `.env` in the skill root (`/Users/hqzhu/dev/agent/skills/gaccode/.env`):
+Create `.env` in the skill root:
 
 ```dotenv
 GACCODE_BASE_URL=https://gaccode.com

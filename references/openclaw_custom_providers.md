@@ -91,14 +91,14 @@ Gaccode exposes multiple relay nodes:
 - `relay07.gaccode.com`
 - `relay08.gaccode.com`
 
-You can benchmark and choose the lowest-latency node:
+You do not need a separate relay script. `scripts/probe.sh` automatically benchmarks these nodes with `fping` when the configured `baseUrl` already points at a gaccode relay hostname, then probes the lowest-latency node while keeping the original path.
 
 ```bash
-bash scripts/relay.sh
-bash scripts/relay.sh
+scripts/probe.sh --provider custom-claude-code
+scripts/probe.sh --provider custom-openai-codex
 ```
 
-Then replace the hostname in `baseUrl`, for example:
+If you want to pin a relay manually, replace the hostname in `baseUrl`, for example:
 
 ```text
 https://relay05.gaccode.com/claudecode
@@ -171,6 +171,7 @@ scripts/probe.sh --provider custom-openai-codex
 ```
 
 The probe script reads `baseUrl`, `apiKey`, `api`, and `model` from the selected provider config.
+When relay auto-selection runs, the JSON response also includes the resolved `baseUrl` and selected relay metadata.
 
 On success, the script prints JSON with `ok: true` and the returned text. On failure, it prints `ok: false` with the upstream error.
 

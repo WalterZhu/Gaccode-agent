@@ -1,6 +1,6 @@
 ---
 name: gaccode
-description: "Use gaccode scripts to inspect balance, trigger refill when needed, choose a relay node, and smoke-test Claude Code or OpenAI Codex provider configs."
+description: "Use gaccode scripts to inspect balance, trigger refill when needed, and smoke-test Claude Code or OpenAI Codex provider configs."
 metadata:
   {
     "openclaw":
@@ -41,7 +41,6 @@ Use this skill when you need to:
 
 - Check gaccode credit balance
 - Trigger the refill flow
-- Select the best relay node
 - Smoke-test a Claude Code or OpenAI Codex provider config
 
 Before using this skill, ensure gaccode credentials are configured correctly.
@@ -50,7 +49,6 @@ Before using this skill, ensure gaccode credentials are configured correctly.
 
 - `/gaccode refill` -> `scripts/refill.sh`
 - `/gaccode refill --force` -> `scripts/refill.sh --force`
-- `/gaccode relay` -> `scripts/relay.sh`
 - `/gaccode probe --provider custom-claude-code` -> `scripts/probe.sh --provider custom-claude-code`
 - `/gaccode probe --provider custom-openai-codex` -> `scripts/probe.sh --provider custom-openai-codex`
 
@@ -63,17 +61,9 @@ scripts/refill.sh
 scripts/refill.sh --force
 ```
 
-## Relay
-
-Use `scripts/relay.sh` to choose the lowest-latency relay node with `fping`.
-
-```bash
-scripts/relay.sh
-```
-
 ## Probe
 
-Use `scripts/probe.sh` to send a minimal text-only `hello` request. By default, it reads the provider from `~/.openclaw/openclaw.json`.
+Use `scripts/probe.sh` to send a minimal text-only `hello` request. By default, it reads the provider from `~/.openclaw/openclaw.json`. If the configured `baseUrl` uses a gaccode relay hostname, the script benchmarks the known relay nodes with `fping` and probes the lowest-latency node while preserving the original path.
 
 Claude Code:
 
