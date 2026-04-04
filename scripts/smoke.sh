@@ -3,18 +3,6 @@
 set -euo pipefail
 
 DEFAULT_CONFIG_PATH="${OPENCLAW_CONFIG:-$HOME/.openclaw/openclaw.json}"
-GACCODE_RELAY_NODES=(
-  "gaccode.com"
-  "api.gaccode.com"
-  "relay01.gaccode.com"
-  "relay03.gaccode.com"
-  "relay05.gaccode.com"
-  "relay07.gaccode.com"
-  "relay08.gaccode.com"
-)
-FPING_COUNT=3
-FPING_PERIOD_MS=200
-FPING_TIMEOUT_MS=500
 
 require_bin() {
   if ! command -v "$1" >/dev/null 2>&1; then
@@ -37,8 +25,6 @@ BASE_URL=""
 API_KEY=""
 API_KIND=""
 MODEL_ID=""
-SELECTED_RELAY_NODE=""
-SELECTED_RELAY_LATENCY=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -127,83 +113,6 @@ resolve_api_key_from_provider() {
   esac
 }
 
-average_values() {
-  awk '
-    {
-      for (i = 1; i <= NF; i++) {
-        if ($i != "-") {
-          sum += $i
-          count++
-        }
-      }
-    }
-    END {
-      if (count > 0) {
-        printf "%.3f", sum / count
-      }
-    }
-  '
-}
-
-is_gaccode_relay_host() {
-  local host="$1"
-  local node
-  for node in "${GACCODE_RELAY_NODES[@]}"; do
-    [[ "$node" == "$host" ]] && return 0
-  done
-  return 1
-}
-
-measure_gaccode_relays() {
-  fping -C "$FPING_COUNT" -p "$FPING_PERIOD_MS" -t "$FPING_TIMEOUT_MS" "${GACCODE_RELAY_NODES[@]}" 2>&1 || true
-}
-
-select_best_gaccode_relay() {
-  local best_node=""
-  local best_latency="999999"
-  local line=""
-  local node=""
-  local latency=""
-
-  while IFS= read -r line; do
-    node=$(echo "$line" | awk -F' : ' 'NF > 1 { print $1 }')
-    latency=$(echo "$line" | awk -F' : ' 'NF > 1 { print $2 }' | average_values)
-
-    if [[ -n "$node" && -n "$latency" ]]; then
-      if [[ "$(echo "$latency < $best_latency" | bc)" -eq 1 ]]; then
-        best_latency="$latency"
-        best_node="$node"
-      fi
-    fi
-  done < <(measure_gaccode_relays)
-
-  if [[ -n "$best_node" ]]; then
-    SELECTED_RELAY_NODE="$best_node"
-    SELECTED_RELAY_LATENCY="$best_latency"
-  fi
-}
-
-maybe_switch_to_best_gaccode_relay() {
-  local base_host=""
-  base_host=$(printf '%s' "$BASE_URL" | jq -Rr 'try capture("^(?<scheme>https?)://(?<host>[^/]+)").host catch ""')
-
-  [[ -n "$base_host" ]] || return 0
-  is_gaccode_relay_host "$base_host" || return 0
-
-  require_bin fping
-  require_bin bc
-  select_best_gaccode_relay
-
-  [[ -n "$SELECTED_RELAY_NODE" ]] || return 0
-  BASE_URL=$(printf '%s' "$BASE_URL" | jq -Rr --arg host "$base_host" --arg newHost "$SELECTED_RELAY_NODE" '
-    if startswith("http://") or startswith("https://") then
-      sub("^(https?://)" + ($host | gsub("([.^$|()\\[\\]{}*+?\\\\-])"; "\\\\\\1")); "\\1" + $newHost)
-    else
-      .
-    end
-  ')
-}
-
 load_from_config() {
   [[ -f "$DEFAULT_CONFIG_PATH" ]] || {
     echo "OpenClaw config not found: $DEFAULT_CONFIG_PATH" >&2
@@ -243,7 +152,6 @@ load_from_config
   exit 1
 }
 BASE_URL="${BASE_URL%/}"
-maybe_switch_to_best_gaccode_relay
 
 case "$API_KIND" in
   anthropic-messages)
@@ -276,17 +184,10 @@ case "$API_KIND" in
       exit 1
     fi
 
-    echo "$response" | jq \
-      --arg provider "$PROVIDER_NAME" \
-      --arg baseUrl "$BASE_URL" \
-      --arg relayNode "$SELECTED_RELAY_NODE" \
-      --arg relayLatency "$SELECTED_RELAY_LATENCY" '
-      {
+    echo "$response" | jq --arg provider "$PROVIDER_NAME" --arg baseUrl "$BASE_URL" '{
       ok: true,
       provider: ($provider // null),
       baseUrl: ($baseUrl // null),
-      selectedRelayNode: ($relayNode | select(length > 0)),
-      selectedRelayLatencyMs: (($relayLatency | select(length > 0)) // empty),
       api: "anthropic-messages",
       id,
       model,
@@ -321,17 +222,10 @@ case "$API_KIND" in
       exit 1
     fi
 
-    echo "$response" | jq \
-      --arg provider "$PROVIDER_NAME" \
-      --arg baseUrl "$BASE_URL" \
-      --arg relayNode "$SELECTED_RELAY_NODE" \
-      --arg relayLatency "$SELECTED_RELAY_LATENCY" '
-      {
+    echo "$response" | jq --arg provider "$PROVIDER_NAME" --arg baseUrl "$BASE_URL" '{
       ok: true,
       provider: ($provider // null),
       baseUrl: ($baseUrl // null),
-      selectedRelayNode: ($relayNode | select(length > 0)),
-      selectedRelayLatencyMs: (($relayLatency | select(length > 0)) // empty),
       api: "openai-responses",
       id,
       model,

@@ -91,10 +91,10 @@ Gaccode exposes multiple relay nodes:
 - `relay07.gaccode.com`
 - `relay08.gaccode.com`
 
-You do not need a separate relay script. `scripts/probe.sh` automatically benchmarks these nodes with `fping` when the configured `baseUrl` already points at a gaccode relay hostname, then probes the lowest-latency node while keeping the original path.
+Use `scripts/nodes.sh` to benchmark these nodes with `fping`.
 
 ```bash
-scripts/probe.sh --provider claude-code
+scripts/nodes.sh
 ```
 
 If you want to pin a relay manually, replace the hostname in `baseUrl`, for example:
@@ -155,14 +155,13 @@ If your relay operator documents a different limit for the same ID, follow the r
 
 ## Smoke Test
 
-Use `scripts/probe.sh` to send the simplest possible text-only request. `--provider` is the provider key in `~/.openclaw/openclaw.json`.
+Use `scripts/smoke.sh` to send the simplest possible text-only request. `--provider` is the provider key in `~/.openclaw/openclaw.json`.
 
 ```bash
-scripts/probe.sh --provider claude-code
+scripts/smoke.sh --provider claude-code
 ```
 
-The probe script reads `baseUrl`, `apiKey`, `api`, and `model` from the selected provider config, then automatically chooses the correct validation flow from the provider's `api` value.
-When relay auto-selection runs, the JSON response also includes the resolved `baseUrl` and selected relay metadata.
+The smoke script reads `baseUrl`, `apiKey`, `api`, and `model` from the selected provider config, then automatically chooses the correct validation flow from the provider's `api` value.
 
 On success, the script prints JSON with `ok: true` and the returned text. On failure, it prints `ok: false` with the upstream error.
 

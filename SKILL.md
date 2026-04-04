@@ -1,6 +1,6 @@
 ---
 name: gaccode
-description: "Use gaccode scripts to inspect balance, trigger refill when needed, and smoke-test Claude Code or OpenAI Codex provider configs."
+description: "Use gaccode scripts to inspect balance, trigger refill when needed, benchmark gaccode nodes, and smoke-test provider configs."
 metadata:
   {
     "openclaw":
@@ -41,6 +41,7 @@ Use this skill when you need to:
 
 - Check gaccode credit balance
 - Trigger the refill flow
+- Benchmark gaccode relay nodes
 - Smoke-test a Claude Code or OpenAI Codex provider config
 
 Before using this skill, ensure gaccode credentials are configured correctly.
@@ -49,7 +50,8 @@ Before using this skill, ensure gaccode credentials are configured correctly.
 
 - `/gaccode refill` -> `scripts/refill.sh`
 - `/gaccode refill --force` -> `scripts/refill.sh --force`
-- `/gaccode probe --provider <provider-key>` -> `scripts/probe.sh --provider <provider-key>`
+- `/gaccode node` -> `scripts/nodes.sh`
+- `/gaccode smoke <provider-key>` -> `scripts/smoke.sh --provider <provider-key>`
 
 ## Refill
 
@@ -60,12 +62,20 @@ scripts/refill.sh
 scripts/refill.sh --force
 ```
 
-## Probe
+## Node
 
-Use `scripts/probe.sh` to send a minimal text-only `hello` request. `--provider` is the provider key in `~/.openclaw/openclaw.json`. The script reads that provider config and automatically chooses the correct validation flow from its `api` value. If the configured `baseUrl` uses a gaccode relay hostname, the script benchmarks the known relay nodes with `fping` and probes the lowest-latency node while preserving the original path.
+Use `scripts/nodes.sh` to benchmark gaccode relay nodes with `fping`.
 
 ```bash
-scripts/probe.sh --provider claude-code
+scripts/nodes.sh
+```
+
+## Smoke
+
+Use `scripts/smoke.sh` to send a minimal text-only `hello` request. `--provider` is the provider key in `~/.openclaw/openclaw.json`. The script reads that provider config and automatically chooses the correct validation flow from its `api` value.
+
+```bash
+scripts/smoke.sh --provider claude-code
 ```
 
 ## References
