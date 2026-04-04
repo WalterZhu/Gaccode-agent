@@ -48,8 +48,8 @@ Before using this skill, ensure gaccode credentials are configured correctly.
 
 ## Commands
 
-- `/gaccode refill` -> `scripts/refill.sh`
-- `/gaccode refill --force` -> `scripts/refill.sh --force`
+- `/gaccode` -> `scripts/refill.sh`
+- `/gaccode refill` -> `scripts/refill.sh --force`
 - `/gaccode node` -> `scripts/nodes.sh`
 - `/gaccode smoke <provider-key>` -> `scripts/smoke.sh --provider <provider-key>`
 
