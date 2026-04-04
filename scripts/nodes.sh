@@ -28,9 +28,6 @@ FPING_COUNT=3
 FPING_PERIOD_MS=200
 FPING_TIMEOUT_MS=500
 
-BEST_NODE=""
-BEST_LATENCY="999999"
-
 average_values() {
   awk '
     {
@@ -53,32 +50,36 @@ measure_nodes() {
   fping -C "$FPING_COUNT" -p "$FPING_PERIOD_MS" -t "$FPING_TIMEOUT_MS" "${NODES[@]}" 2>&1 || true
 }
 
+collect_results() {
+  while IFS= read -r line; do
+    node=$(echo "$line" | awk -F' : ' 'NF > 1 { print $1 }')
+    latency=$(echo "$line" | awk -F' : ' 'NF > 1 { print $2 }' | average_values)
+
+    if [[ -n "$node" && -n "$latency" ]]; then
+      printf '%s\t%s\n' "$node" "$latency"
+    fi
+  done < <(measure_nodes)
+}
+
 print_result() {
+  local results="$1"
+
   cat <<EOF
 Best node: $BEST_NODE
 Latency: $BEST_LATENCY ms
-Base URL: https://$BEST_NODE
-Recommended URL: https://$BEST_NODE/api/v1
+All nodes:
+$(printf '%s\n' "$results" | awk '{ printf "- %s: %s ms\n", $1, $2 }')
 EOF
 }
 
 require_bin fping
-require_bin bc
 
-while IFS= read -r line; do
-  node=$(echo "$line" | awk -F' : ' 'NF > 1 { print $1 }')
-  latency=$(echo "$line" | awk -F' : ' 'NF > 1 { print $2 }' | average_values)
+RESULTS=$(collect_results | sort -k2,2n)
 
-  if [[ -n "$node" && -n "$latency" ]]; then
-    if [[ "$(echo "$latency < $BEST_LATENCY" | bc)" -eq 1 ]]; then
-      BEST_LATENCY="$latency"
-      BEST_NODE="$node"
-    fi
-  fi
-done < <(measure_nodes)
-
-if [[ -n "$BEST_NODE" ]]; then
-  print_result
+if [[ -n "$RESULTS" ]]; then
+  BEST_NODE=$(printf '%s\n' "$RESULTS" | awk 'NR == 1 { print $1 }')
+  BEST_LATENCY=$(printf '%s\n' "$RESULTS" | awk 'NR == 1 { print $2 }')
+  print_result "$RESULTS"
 else
   echo "No reachable nodes found" >&2
   exit 1
