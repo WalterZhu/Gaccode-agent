@@ -133,6 +133,38 @@ load_from_config() {
   API_KEY=$(resolve_api_key_from_provider "$provider_json")
 }
 
+print_success_result() {
+  local api_kind="$1"
+  local response_id="$2"
+  local model="$3"
+  local text="$4"
+
+  cat <<EOF
+Smoke test succeeded.
+Provider: $PROVIDER_NAME
+Base URL: $BASE_URL
+API: $api_kind
+Model: $model
+Response ID: $response_id
+Text: $text
+EOF
+}
+
+print_error_result() {
+  local api_kind="$1"
+  local error_type="$2"
+  local error_message="$3"
+
+  cat <<EOF
+Smoke test failed.
+Provider: $PROVIDER_NAME
+Base URL: $BASE_URL
+API: $api_kind
+Error Type: $error_type
+Error: $error_message
+EOF
+}
+
 load_from_config
 
 [[ -n "$BASE_URL" ]] || {
@@ -174,25 +206,18 @@ case "$API_KIND" in
     )
 
     if echo "$response" | jq -e '.error' >/dev/null 2>&1; then
-      echo "$response" | jq --arg provider "$PROVIDER_NAME" '{
-        ok: false,
-        provider: ($provider // null),
-        api: "anthropic-messages",
-        errorType: .error.type,
-        error: .error.message
-      }'
+      print_error_result \
+        "anthropic-messages" \
+        "$(echo "$response" | jq -r '.error.type // "unknown"')" \
+        "$(echo "$response" | jq -r '.error.message // "Unknown error"')"
       exit 1
     fi
 
-    echo "$response" | jq --arg provider "$PROVIDER_NAME" --arg baseUrl "$BASE_URL" '{
-      ok: true,
-      provider: ($provider // null),
-      baseUrl: ($baseUrl // null),
-      api: "anthropic-messages",
-      id,
-      model,
-      text: ([.content[]? | select(.type == "text") | .text] | join(""))
-    }'
+    print_success_result \
+      "anthropic-messages" \
+      "$(echo "$response" | jq -r '.id // "N/A"')" \
+      "$(echo "$response" | jq -r '.model // "N/A"')" \
+      "$(echo "$response" | jq -r '([.content[]? | select(.type == "text") | .text] | join("")) // ""')"
     ;;
 
   openai-responses)
@@ -212,25 +237,18 @@ case "$API_KIND" in
     )
 
     if echo "$response" | jq -e '.error' >/dev/null 2>&1; then
-      echo "$response" | jq --arg provider "$PROVIDER_NAME" '{
-        ok: false,
-        provider: ($provider // null),
-        api: "openai-responses",
-        errorType: .error.type,
-        error: .error.message
-      }'
+      print_error_result \
+        "openai-responses" \
+        "$(echo "$response" | jq -r '.error.type // "unknown"')" \
+        "$(echo "$response" | jq -r '.error.message // "Unknown error"')"
       exit 1
     fi
 
-    echo "$response" | jq --arg provider "$PROVIDER_NAME" --arg baseUrl "$BASE_URL" '{
-      ok: true,
-      provider: ($provider // null),
-      baseUrl: ($baseUrl // null),
-      api: "openai-responses",
-      id,
-      model,
-      text: (.output_text // ([.output[]?.content[]? | select(.type == "output_text") | .text] | join("")))
-    }'
+    print_success_result \
+      "openai-responses" \
+      "$(echo "$response" | jq -r '.id // "N/A"')" \
+      "$(echo "$response" | jq -r '.model // "N/A"')" \
+      "$(echo "$response" | jq -r '(.output_text // ([.output[]?.content[]? | select(.type == "output_text") | .text] | join(""))) // ""')"
     ;;
 
   *)

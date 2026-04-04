@@ -46,6 +46,15 @@ Use this skill when you need to:
 
 Before using this skill, ensure gaccode credentials are configured correctly.
 
+## Response Format
+
+When handling `/gaccode` commands:
+
+- Default to a short, formal plain-text result instead of raw JSON.
+- Summarize the script result directly without adding extra explanation or interpretation.
+- Preserve key values exactly when reporting balances, latency values, URLs, model IDs, or provider IDs.
+- Only include raw script output when it is necessary for debugging or the user explicitly asks for it.
+
 ## Commands
 
 - `/gaccode` -> `scripts/refill.sh`

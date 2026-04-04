@@ -198,6 +198,12 @@ should_refill() {
   '
 }
 
+format_balance_summary() {
+  jq -r '
+    "Balance: \(.balance // 0)\nCredit Cap: \(.creditCap // 0)\nBalance Ratio: \((.balanceRatio // 0) | tostring)"
+  '
+}
+
 submit_refill() {
   local token="$1"
 
@@ -215,14 +221,12 @@ cmd_refill() {
   refill_needed=$(echo "$balance_with_ratio" | should_refill)
 
   if [[ "$FORCE_MODE" != "true" && "$refill_needed" != "true" ]]; then
-    echo "$balance_with_ratio" | jq --arg threshold "$REFILL_THRESHOLD" '
-      . + {
-        action: "skip_refill",
-        reason: "balance_ratio_not_below_threshold",
-        refillThreshold: ($threshold | tonumber),
-        forced: false
-      }
-    '
+    cat <<EOF
+Refill not required.
+$(echo "$balance_with_ratio" | format_balance_summary)
+Threshold: $REFILL_THRESHOLD
+Forced: false
+EOF
     return 0
   fi
 
@@ -230,35 +234,26 @@ cmd_refill() {
   support_msg=$(echo "$response" | jq -r '.ticket.messages[]? | select(.isFromSupport == true) | .message' | head -1)
 
   if [[ "$support_msg" == *"已重置"* ]]; then
-    balance_after=$(get_balance_with_ratio "$token" || echo "null")
-    jq -n \
-      --argjson balanceBefore "$balance_with_ratio" \
-      --argjson balanceAfter "$balance_after" \
-      --arg message "$support_msg" \
-      --argjson forced "$FORCE_MODE" \
-      --arg threshold "$REFILL_THRESHOLD" \
-      '{
-        action: "refill",
-        status: "success",
-        refillThreshold: ($threshold | tonumber),
-        forced: $forced,
-        message: $message,
-        balanceBefore: $balanceBefore,
-        balanceAfter: $balanceAfter
-      }'
+    balance_after=$(get_balance_with_ratio "$token" || true)
+    cat <<EOF
+Refill succeeded.
+Message: $support_msg
+Threshold: $REFILL_THRESHOLD
+Forced: $FORCE_MODE
+Balance Before:
+$(echo "$balance_with_ratio" | format_balance_summary)
+Balance After:
+$(if [[ -n "$balance_after" ]]; then echo "$balance_after" | format_balance_summary; else echo "Unavailable"; fi)
+EOF
   else
-    jq -n \
-      --argjson balanceBefore "$balance_with_ratio" \
-      --argjson forced "$FORCE_MODE" \
-      --arg threshold "$REFILL_THRESHOLD" \
-      '{
-        action: "refill",
-        status: "failed",
-        refillThreshold: ($threshold | tonumber),
-        forced: $forced,
-        message: "请登录gaccode网站查看",
-        balanceBefore: $balanceBefore
-      }'
+    cat <<EOF
+Refill failed.
+Message: 请登录gaccode网站查看
+Threshold: $REFILL_THRESHOLD
+Forced: $FORCE_MODE
+Balance Before:
+$(echo "$balance_with_ratio" | format_balance_summary)
+EOF
     exit 1
   fi
 }

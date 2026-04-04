@@ -53,14 +53,12 @@ measure_nodes() {
   fping -C "$FPING_COUNT" -p "$FPING_PERIOD_MS" -t "$FPING_TIMEOUT_MS" "${NODES[@]}" 2>&1 || true
 }
 
-print_json_result() {
+print_result() {
   cat <<EOF
-{
-  "best_node": "$BEST_NODE",
-  "latency_ms": "$BEST_LATENCY",
-  "recommended_url": "https://$BEST_NODE/api/v1",
-  "base_url": "https://$BEST_NODE"
-}
+Best node: $BEST_NODE
+Latency: $BEST_LATENCY ms
+Base URL: https://$BEST_NODE
+Recommended URL: https://$BEST_NODE/api/v1
 EOF
 }
 
@@ -80,7 +78,7 @@ while IFS= read -r line; do
 done < <(measure_nodes)
 
 if [[ -n "$BEST_NODE" ]]; then
-  print_json_result
+  print_result
 else
   echo "No reachable nodes found" >&2
   exit 1
