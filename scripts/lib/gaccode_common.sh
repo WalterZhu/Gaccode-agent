@@ -184,11 +184,33 @@ format_balance_summary() {
 
 format_subscription_summary() {
   jq -r '
+    def normalize_iso8601:
+      if type == "string" then sub("\\.[0-9]+Z$"; "Z") else . end;
+    def remaining_text($end_date):
+      if ($end_date | type) != "string" or ($end_date | length) == 0 then
+        "N/A"
+      else
+        (($end_date | normalize_iso8601 | fromdateiso8601) - now) as $seconds
+        | if $seconds <= 0 then
+            "Expired"
+          else
+            ($seconds / 86400 | floor) as $days
+            | (($seconds % 86400) / 3600 | floor) as $hours
+            | (($seconds % 3600) / 60 | floor) as $minutes
+            | if $days > 0 then
+                "\($days)d \($hours)h \($minutes)m"
+              elif $hours > 0 then
+                "\($hours)h \($minutes)m"
+              else
+                "\($minutes)m"
+              end
+          end
+      end;
     .subscriptions[0] as $subscription
     | if $subscription == null then
-        "Subscription Tier: None\nSubscription End Date: N/A"
+        "Subscription Tier: None\nSubscription End Date: N/A\nSubscription Time Remaining: N/A"
       else
-        "Subscription Tier: \($subscription.subscription.tier // "Unknown")\nSubscription End Date: \($subscription.endDate // "N/A")"
+        "Subscription Tier: \($subscription.subscription.tier // "Unknown")\nSubscription End Date: \($subscription.endDate // "N/A")\nSubscription Time Remaining: \(remaining_text($subscription.endDate))"
       end
   '
 }
