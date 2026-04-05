@@ -49,7 +49,6 @@ Before using this skill, ensure gaccode credentials are configured correctly.
 ## Execution
 
 Before running any bundled shell script, change to the skill root directory that contains this `SKILL.md`.
-Run scripts from that directory with `./scripts/...` paths instead of bare `scripts/...` paths.
 
 ## Response Format
 
@@ -60,45 +59,29 @@ When handling `/gaccode` commands:
 - Preserve key values exactly when reporting balances, latency values, URLs, model IDs, or provider IDs.
 - Only include raw script output when it is necessary for debugging or the user explicitly asks for it.
 
-## Commands
-
-- `/gaccode` -> `./scripts/balance.sh`
-- `/gaccode refill` -> `./scripts/refill.sh --force`
-- `/gaccode node` -> `./scripts/nodes.sh`
-- `/gaccode smoke <provider-key>` -> `./scripts/smoke.sh --provider <provider-key>`
-
 ## Refill
 
-Use `./scripts/refill.sh` to check balance and trigger the refill flow when needed.
+Command: `/gaccode refill` -> `./scripts/refill.sh`
 
-```bash
-./scripts/refill.sh
-./scripts/refill.sh --force
-```
+Use `./scripts/refill.sh` to trigger the refill flow.
 
 ## Balance
 
-Use `./scripts/balance.sh` to query the current credit balance without triggering refill.
+Command: `/gaccode` -> `./scripts/balance.sh`
 
-```bash
-./scripts/balance.sh
-```
+Use `./scripts/balance.sh` to query the current credit balance without triggering refill.
 
 ## Node
 
-Use `./scripts/nodes.sh` to benchmark gaccode relay nodes with `fping`.
+Command: `/gaccode node` -> `./scripts/nodes.sh`
 
-```bash
-./scripts/nodes.sh
-```
+Use `./scripts/nodes.sh` to benchmark gaccode relay nodes with `fping`.
 
 ## Smoke
 
-Use `./scripts/smoke.sh` to send a minimal text-only `hello` request. `--provider` is the provider key in `~/.openclaw/openclaw.json`. The script reads that provider config and automatically chooses the correct validation flow from its `api` value.
+Command: `/gaccode smoke <provider-key>` -> `./scripts/smoke.sh --provider <provider-key>`
 
-```bash
-./scripts/smoke.sh --provider claude-code
-```
+Use `./scripts/smoke.sh` to send a minimal text-only `hello` request. `--provider` is the provider key in `~/.openclaw/openclaw.json`. The script reads that provider config and automatically chooses the correct validation flow from its `api` value.
 
 ## References
 
