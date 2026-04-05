@@ -19,11 +19,11 @@ When gaccode officially supports API keys for the same workflow, this skill will
 
 - `GACCODE_BASE_URL`: gaccode base URL.
   - Default: `https://gaccode.com`
-  - `scripts/refill.sh` will read this value from `.env`
-  - If unset or empty, `scripts/refill.sh` falls back to `https://gaccode.com`
+  - `scripts/balance.sh` and `scripts/refill.sh` read this value from `.env`
+  - If unset or empty, they fall back to `https://gaccode.com`
 - `GACCODE_TOKEN`: cached auth token.
-  - `scripts/refill.sh` will validate and reuse it when possible
-  - On login refresh, `scripts/refill.sh` will write the latest token back into `.env`
+  - `scripts/balance.sh` and `scripts/refill.sh` will validate and reuse it when possible
+  - On login refresh, the shared auth logic will write the latest token back into `.env`
 
 ## .env Example
 
