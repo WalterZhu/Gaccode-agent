@@ -47,7 +47,7 @@ average_values() {
 }
 
 measure_nodes() {
-  fping -C "$FPING_COUNT" -p "$FPING_PERIOD_MS" -t "$FPING_TIMEOUT_MS" "${NODES[@]}" 2>&1 || true
+  fping -q -C "$FPING_COUNT" -p "$FPING_PERIOD_MS" -t "$FPING_TIMEOUT_MS" "${NODES[@]}" 2>&1 || true
 }
 
 collect_results() {
