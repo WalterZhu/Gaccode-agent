@@ -61,20 +61,6 @@ collect_results() {
   done < <(measure_nodes)
 }
 
-aggregate_results() {
-  awk -F'\t' '
-    {
-      sum[$1] += $2
-      count[$1] += 1
-    }
-    END {
-      for (node in sum) {
-        printf "%s\t%.3f\n", node, sum[node] / count[node]
-      }
-    }
-  '
-}
-
 print_result() {
   local results="$1"
 
@@ -88,7 +74,7 @@ EOF
 
 require_bin fping
 
-RESULTS=$(collect_results | aggregate_results | sort -k2,2n)
+RESULTS=$(collect_results | sort -k2,2n)
 
 if [[ -n "$RESULTS" ]]; then
   BEST_NODE=$(printf '%s\n' "$RESULTS" | awk 'NR == 1 { print $1 }')

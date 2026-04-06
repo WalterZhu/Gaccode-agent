@@ -163,7 +163,7 @@ scripts/smoke.sh --provider claude-code
 
 The smoke script reads `baseUrl`, `apiKey`, `api`, and `model` from the selected provider config, then automatically chooses the correct validation flow from the provider's `api` value.
 
-On success, the script prints JSON with `ok: true` and the returned text. On failure, it prints `ok: false` with the upstream error.
+On success, the script prints a plain-text summary including provider, base URL, API kind, model, response ID, and returned text. On failure, it prints the error type and error message from the upstream response.
 
 ## Troubleshooting
 

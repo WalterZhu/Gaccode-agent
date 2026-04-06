@@ -4,7 +4,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")"
 ENV_FILE="$ROOT_DIR/.env"
 DEFAULT_BASE_URL="https://gaccode.com"
-ACTIVE_SUBSCRIPTION_URL="https://relay03.gaccode.com/api/subscriptions/active"
+ACTIVE_SUBSCRIPTION_PATH="/api/subscriptions/active"
 
 BASE_URL=""
 EMAIL=""
@@ -126,8 +126,9 @@ api_post() {
 }
 
 login() {
-  local response token
-  response=$(api_post "/api/login" "" "{\"email\":\"$EMAIL\",\"password\":\"$PASSWORD\"}")
+  local response token payload
+  payload=$(jq -n --arg e "$EMAIL" --arg p "$PASSWORD" '{email: $e, password: $p}')
+  response=$(api_post "/api/login" "" "$payload")
   token=$(echo "$response" | jq -r '.token')
 
   [[ -n "$token" && "$token" != "null" ]] || {
@@ -173,7 +174,7 @@ get_balance_with_ratio() {
 get_active_subscription() {
   local token="$1"
 
-  curl -sf "$ACTIVE_SUBSCRIPTION_URL" -H "Authorization: Bearer $token"
+  api_get "$ACTIVE_SUBSCRIPTION_PATH" "$token"
 }
 
 format_balance_summary() {
